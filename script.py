@@ -156,12 +156,18 @@ def today_str():
 def load_state():
     print(f"[State] Loading state from {STATE_PATH} ...")
     if os.path.exists(STATE_PATH):
-        with open(STATE_PATH, "r", encoding="utf-8") as f:
-            state = json.load(f)
-        if state.get("date") == today_str():
-            print(f"[State] Found today's state: {state}")
-            return state
-        print("[State] Stored state is from a previous day, starting fresh.")
+        try:
+            with open(STATE_PATH, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+            if not content:
+                raise ValueError("state.json is empty")
+            state = json.loads(content)
+            if state.get("date") == today_str():
+                print(f"[State] Found today's state: {state}")
+                return state
+            print("[State] Stored state is from a previous day, starting fresh.")
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"[State] state.json is invalid ({e}), starting fresh.")
     else:
         print("[State] No existing state file, starting fresh.")
     return {"date": today_str(), "mt": "pending", "loksatta": "pending"}
