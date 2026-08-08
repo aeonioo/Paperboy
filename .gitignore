@@ -1,0 +1,10 @@
+# general files
+
+downloads/
+*.session
+__pycache__/
+*.pyc
+generate_session.py
+
+# .env file 
+.env

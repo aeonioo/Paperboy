@@ -1,0 +1,62 @@
+name: Daily Newspaper Mailer
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Times are UTC. IST = UTC + 5:30.
+    # Check every 30 minutes from 08:00 IST to 14:30 IST.
+    - cron: "30 2 * * *"   # 08:00 IST
+    - cron: "0 3 * * *"    # 08:30 IST
+    - cron: "30 3 * * *"   # 09:00 IST
+    - cron: "0 4 * * *"    # 09:30 IST
+    - cron: "30 4 * * *"   # 10:00 IST
+    - cron: "0 5 * * *"    # 10:30 IST
+    - cron: "30 5 * * *"   # 11:00 IST
+    - cron: "0 6 * * *"    # 11:30 IST
+    - cron: "30 6 * * *"   # 12:00 IST
+    - cron: "0 7 * * *"    # 12:30 IST
+    - cron: "30 7 * * *"   # 13:00 IST
+    - cron: "0 8 * * *"    # 13:30 IST
+    - cron: "30 8 * * *"   # 14:00 IST
+    - cron: "0 9 * * *"    # 14:30 IST (final attempt)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: newspaper-mailer
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run mailer
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}
+          TELEGRAM_CHANNEL: marathinewspaperwali
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          FATHER_EMAIL: ${{ secrets.FATHER_EMAIL }}
+        run: python script.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "newspaper-bot"
+          git config user.email "actions@github.com"
+          git add state.json
+          git diff --cached --quiet || git commit -m "Update state [skip ci]"
+          git push
